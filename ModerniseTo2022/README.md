@@ -113,3 +113,8 @@ Now that we have our Container Image in Azure, there are several compute options
 ## Step 7 - Deploying to Azure Kubernetes Service
 
 ## Step 7 - Using Azure AD for SQL Authentication
+
+Managed Identities provide a great way for Azure services to access other Azure services with a clear RBAC system.
+
+An Azure Web Application can be given an identity which is then leveraged when accessing the SQL Database. You will need to change your code to get an access token to use with the SQL database connection.  [Read more](https://docs.microsoft.com/en-us/azure/app-service/tutorial-connect-msi-sql-database?tabs=windowsclient%2Cef%2Cdotnet)
+
