@@ -130,10 +130,10 @@ COPY --from=build src/src/PUBLISH/_PublishedWebsites/eShopLegacyWebForms/ ./
 
 Now when the Dockerfile is called via a straight `docker build .` command, it can produce a working app.
 
-Now we have a freestanding Dockerfile, we can leverage the Azure CLI to initiate the ACR build;
+Now we have a free-standing Dockerfile, we can leverage the Azure CLI to initiate the ACR build;
 
 ```bash
-az acr build -r YOURACRNAME -t 2019fullfat:20220804 https://github.com/Gordonby/eShopModernizing.git -f eShopLegacyWebFormsSolution/src/eShopLegacyWebForms/Dockerfile --platform windows
+az acr build -g eshopmodernise -r YOURACRNAME -t 2019fullfat:20220805 https://github.com/Gordonby/eShopModernizing.git -f eShopLegacyWebFormsSolution/Dockerfile --platform windows
 ```
 
 ## Step 6 - Deploying to Azure App Service (Containers)
