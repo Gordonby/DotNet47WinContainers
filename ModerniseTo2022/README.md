@@ -46,7 +46,7 @@ Next, we need to configure the web app not to use Mock data, and instead to use 
   </appSettings>
 ```
 
-Using the Azure Portal, you can view the connection strings for the newly created SQL Database. Replace the connection string in the web.config file.
+Using the Azure Portal, you can view the connection strings for the newly created SQL Database. Replace the connection string in the web.config file, noting the database name has to be `Microsoft.eShopOnContainers.Services.CatalogDb`.
 
 old
 
@@ -64,10 +64,52 @@ new
   </connectionStrings>
 ```
 
-### Azure AD credentials
+## Step 4 - Deploying to App Service
 
-## Step 4 - Modernising to Windows Containers
+![app service publish profile](publishToAppService.png)
 
-## Step 5 - Deploying to Azure App Service
+![app service publish](publishToAppService2.png)
 
-## Step 6 - Deploying to Azure Kubernetes Service
+## Step 5 - Modernising to Windows Containers
+
+Visual Studio makes it easy to add a DockerFile to the application by selecting the project, Add, Docker Support.
+Here's what gets generated.
+
+```dockerfile
+FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2019
+ARG source
+WORKDIR /inetpub/wwwroot
+COPY ${source:-obj/Docker/publish} .
+```
+
+Now we can run the application locally in a container from Visual Studio.
+
+### Pushing the container to ACR
+
+Azure has a container registry for container image storage.
+
+Lets create the registry now.
+
+```bash
+az deployment group create -g eshopmodernise -f .\acr.bicep
+```
+
+Now from Visual Studio we can push the image. In a more structured environment, this would be via the CI/CD system.
+
+![acr publish profile](publishToAcr.png)
+
+![acr publish](publishToAcr2.png)
+
+This can take some time to upload, and if we run the `docker images` command - then we can see why.
+
+![docker images](dockerImages.png)
+
+## Step 6 - Deploying to Azure App Service (Containers)
+
+Now that we have our Container Image in Azure, there are several compute options for hosting it. We'll start by looking at App Service (Containers).
+
+
+
+## Step 7 - Deploying to Azure Kubernetes Service
+
+## Step 7 - Using Azure AD for SQL Authentication

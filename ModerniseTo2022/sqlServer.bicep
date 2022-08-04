@@ -22,6 +22,10 @@ resource sqlServer 'Microsoft.Sql/servers@2022-02-01-preview' = {
     administratorLoginPassword: administratorLoginPassword
     publicNetworkAccess: 'Enabled'
   }
+  
+  resource fwRules 'firewallRules' = {
+    name: 'AllowAllWindowsAzureIps'
+  }
 }
 
 resource sqlDB 'Microsoft.Sql/servers/databases@2022-02-01-preview' = {
