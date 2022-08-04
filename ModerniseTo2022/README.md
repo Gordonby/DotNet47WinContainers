@@ -6,8 +6,10 @@ Before modernising starts, it's best to see the app running and working properly
 
 ### Compilation Error
 
-If you find you receive a compilation error then it can be resolved with 
-'Could not find file ... bin\roslyn\csc.exe' [duplicate]
+If you find you receive a compilation error for roslyn;
+> 'Could not find a part of the path '\eShopModernizing\eShopLegacyWebFormsSolution\src\eShopLegacyWebForms\bin\roslyn\csc.exe''
+
+Then this can be resolved by running this command in the Package Manager Console;
 
 ```powershell
 Update-Package Microsoft.CodeDom.Providers.DotNetCompilerPlatform -r
