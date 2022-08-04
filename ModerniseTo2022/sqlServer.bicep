@@ -2,7 +2,7 @@
 param serverName string = 'sql-${sqlDBName}-${uniqueString('sql', resourceGroup().id)}'
 
 @description('The name of the SQL Database.')
-param sqlDBName string = 'eShop'
+param sqlDBName string = 'Microsoft.eShopOnContainers.Services.CatalogDb'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
