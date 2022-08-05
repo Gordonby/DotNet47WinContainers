@@ -1,5 +1,8 @@
 # Modernising to Windows Server 2022
 
+This guide provides a step by step, developer centric view of migrating legacy ASP.NET applications to Azure.
+For a tool based approach using  Azure Migrate: App Containerization tool, please see [https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-kubernetes](https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-kubernetes) or [https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-app-service](https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-app-service), noting that current tool doesn't support Apps that use Windows Authentication or have non IIS dependencies.
+
 ## Step 1 - Getting the app running
 
 Before modernising starts, it's best to see the app running and working properly.
@@ -204,9 +207,9 @@ An Azure Web Application can be given an identity which is then leveraged when a
 
 ## Step 8 - Deploying to Azure Kubernetes Service
 
+## Step 9 - Windows Server 2022 based images
 
-
-
+Windows Server 2022 has a number of benefits over Windows Server 2019, https://docs.microsoft.com/virtualization/windowscontainers/about/whats-new-ws2022-containers
 
 ## Links
 
