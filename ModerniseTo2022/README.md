@@ -4,6 +4,8 @@
 
 Before modernising starts, it's best to see the app running and working properly.
 
+Clone or download this GitHub repository, and open the `eShopLegacyWebFormsSolution/eShopLegacyWebForms.sln` file in Visual Studio.
+
 ### Compilation Error
 
 If you find you receive a compilation error for roslyn;
@@ -17,6 +19,8 @@ Update-Package Microsoft.CodeDom.Providers.DotNetCompilerPlatform -r
 
 ### Running the app
 
+As simple as pressing start, we now have the application working with an in-memory database.
+
 ![working legacy app](legacyAppScreenshot.png)
 
 ## Step 2 - Publishing to an Azure VM
@@ -25,13 +29,19 @@ It can be useful to see the app working on a traditional Windows VM as part of t
 
 This provides a more realistic environment to run the app from, than your local development workstation. It later stages it can also enable domain account synchronisation to Azure AD.
 
+Create a resource group for all the Azure resources we'll need.
+
 ```bash
 az group create -n eshopmodernise -l uksouth
 ```
 
-## Step 3 - Connecting to SQL
+Create a Web Server VM : [https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-cli#create-virtual-machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-cli#create-virtual-machine)
 
-First we need to create the SQL database infrastructure in Azure.
+## Step 3 - Connecting to a SQL database
+
+The application is working from an in-memory database, and the next step is to configure it to use an Azure SQL Database.
+
+First we need to create the actual SQL database infrastructure in Azure.
 
 ```bash
 az deployment group create -g eshopmodernise -f sqlServer.bicep
@@ -66,7 +76,11 @@ new
 
 ## Step 4 - Deploying to App Service
 
+Visual Studio has Publishing Profiles for deploying your app to a new App Service plan in Azure. Follow the Publishing Wizard to create an App Service Hosting Plan and the Application itself.
+
 ![app service publish profile](publishToAppService.png)
+
+Publish the application to Azure.
 
 ![app service publish](publishToAppService2.png)
 
@@ -173,13 +187,26 @@ Azure Service | Summary | Docs | Learn Courses
 
 https://docs.microsoft.com/en-gb/azure/app-service/configure-custom-container?pivots=container-linux#use-an-image-from-a-private-registry
 
-## Step 7 - Deploying to Azure Kubernetes Service
-
-## Step 7 - Using Azure AD for SQL Authentication
+### Using Azure AD for SQL Authentication
 
 Managed Identities provide a great way for Azure services to access other Azure services with a clear RBAC system.
 
 An Azure Web Application can be given an identity which is then leveraged when accessing the SQL Database. You will need to change your code to get an access token to use with the SQL database connection.  [Read more](https://docs.microsoft.com/en-us/azure/app-service/tutorial-connect-msi-sql-database?tabs=windowsclient%2Cef%2Cdotnet)
+
+### Application Settings
+
+### Key Vault integration
+
+### Observability
+
+1. Logs
+1. Application Insights
+
+## Step 8 - Deploying to Azure Kubernetes Service
+
+
+
+
 
 ## Links
 
