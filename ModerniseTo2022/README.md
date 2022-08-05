@@ -214,6 +214,10 @@ An Azure Web Application can be given an identity which is then leveraged when a
 1. Logs
 1. Application Insights
 
+#### Application Insights
+
+Enable [Auto-Instrumentation](https://azure.github.io/AppService/2022/04/11/windows-containers-app-insights-preview.html) of your Web App Container to automatically attach an agent to the container. It will collect metrics such as requests, dependencies, latency, and stack traces.
+
 ### Scalability
 
 [ARR affinity](https://azure.github.io/AppService/2016/05/16/Disable-Session-affinity-cookie-(ARR-cookie)-for-Azure-web-apps.html) is supported 
