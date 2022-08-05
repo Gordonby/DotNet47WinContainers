@@ -163,10 +163,11 @@ Building and pushing images locally can take time, all dependant on your interne
 Now we have a free-standing Dockerfile, we can leverage the Azure CLI to initiate the ACR build;
 
 ```bash
-az acr build -g eshopmodernise -r YOURACRNAME -t 2019fullfat:20220805 https://github.com/Gordonby/eShopModernizing.git -f eShopLegacyWebFormsSolution/Dockerfile --platform windows
+az acr build -g eshopmodernise -r YOURACRNAME -t 2019fullfat:20220805 https://github.com/Gordonby/eShopModernizing.git#main:eShopLegacyWebFormsSolution --platform windows
 ```
 
 ![acr build screenshot one](acrbuild.png)
+![acr build screenshot two](acrbuild2.png)
 
 ### Building the image in CI/CD Tooling
 
@@ -188,6 +189,14 @@ Azure Service | Summary | Docs | Learn Courses
 
 ## Step 7 - Deploying to Azure App Service (Containers)
 
+For this step, we'll use the [portal](https://ms.portal.azure.com/#create/Microsoft.AppSvcLinux) to quickly create a Windows OS, Docker Container based Web App. The portal makes light work of pulling our image from the Azure Container Registry.
+
+![web app for containers create](webAppContainers.png)
+
+Once the image has been pulled, the application is available, running from the same Azure Database.
+
+![web app for containers running](webAppContainers2.png)
+
 https://docs.microsoft.com/en-gb/azure/app-service/configure-custom-container?pivots=container-linux#use-an-image-from-a-private-registry
 
 ### Using Azure AD for SQL Authentication
@@ -204,6 +213,10 @@ An Azure Web Application can be given an identity which is then leveraged when a
 
 1. Logs
 1. Application Insights
+
+### Scalability
+
+[ARR affinity](https://azure.github.io/AppService/2016/05/16/Disable-Session-affinity-cookie-(ARR-cookie)-for-Azure-web-apps.html) is supported 
 
 ## Step 8 - Deploying to Azure Kubernetes Service
 
