@@ -1,118 +1,246 @@
+# Modernising to Windows Server 2022
 
-# eShopModernizing - Modernizing ASP.NET Web apps (MVC and WebForms) and N-Tier apps (WCF + WinForms) with Windows Containers and Azure
+This guide provides a step by step, developer centric view of migrating **legacy ASP.NET applications** to Azure.
+For a tool based approach using  Azure Migrate: App Containerization tool, please see [https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-kubernetes](https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-kubernetes) or [https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-app-service](https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-app-service), noting that current tool doesn't support Apps that use Windows Authentication or have non IIS dependencies.
 
-This repo provides three sample hypothetical legacy eShop web apps (traditional ASP.NET WebForms and MVC in .NET Framework and an N-Tier app based on a WCF service and a client WinForms desktop app) and how you can modernize them (Lift and Shift scenario) with Windows Containers and Azure Cloud into the following deployment options:
+## Step 1 - Getting the app running
 
-- Local build and deployment in dev PC with Visual Studio and Docker for Windows
-- Azure Container Instances (ACI)
-- Regular Windows Server 2016 VM (Virtual Machine)
-- AKS Kubernetes orchestrator cluster
-- Azure Web App for Containers (Windows Containers)
+Before modernising starts, it's best to see the app running and working properly.
 
-All those mentioned environments can be deployed into Azure cloud (as explained in the Wiki) but you can also deploy all those environments into on-premises servers or even in other public clouds.
+Clone or download this GitHub repository, and open the `eShopLegacyWebFormsSolution/eShopLegacyWebForms.sln` file in Visual Studio.
 
-## Related Guide/eBook
-You can download its related guidance with this free guide/eBook (2nd Edition):
+### Compilation Error
 
-<img src="https://github.com/dotnet/docs/raw/master/docs/architecture/modernize-with-azure-containers/media/index/web-application-guide-cover-image.png" width="300">
+If you find you receive a compilation error for roslyn;
+> 'Could not find a part of the path '\eShopModernizing\eShopLegacyWebFormsSolution\src\eShopLegacyWebForms\bin\roslyn\csc.exe''
 
-.PDF download: https://aka.ms/liftandshiftwithcontainersebook
+Then this can be resolved by running this command in the Package Manager Console;
 
-The modernization with Windows Containers significantly improves the deployments for DevOps, without having to change the app's architecture or C# code.
+```powershell
+Update-Package Microsoft.CodeDom.Providers.DotNetCompilerPlatform -r
+```
 
-The sample apps are simple web apps for the internal backoffice of an eShop so employees can update the Product Catalog. 
-Both apps are therefore simple CRUD web application to update data into a SQL Server database. 
+### Running the app
 
-See a screenshots of both apps below.
+As simple as pressing start, we now have the application working with an in-memory database.
 
-### INITIAL VERSIONS OF EXISTING ASP.NET WEB APPS
+![working legacy app](legacyAppScreenshot.png)
 
-![image](https://user-images.githubusercontent.com/1712635/30354184-db7f1098-97df-11e7-8e7b-c18c67b8ba2a.png)
+## Step 2 - Publishing to an Azure VM
 
-### CONTAINERIZED VERSION IN DEVELOPMENT ENVIRONMENT
+It can be useful to see the app working on a traditional Windows VM as part of the modernisation journey.
 
-![image](https://user-images.githubusercontent.com/1712635/30395628-9c4bff98-987b-11e7-82ca-89a1648f3bdc.png)
+This provides a more realistic environment to run the app from, than your local development workstation. It later stages it can also enable domain account synchronisation to Azure AD.
 
-### UI and business features
+Create a resource group for all the Azure resources we'll need.
 
-The WebFoms and MVC apps are pretty similiar in regards UI and business features. We just created both versions so you can compare, depending on what technology you are using for your existing apps (ASP.NET MVC or Web Forms).
+```bash
+az group create -n eshopmodernise -l uksouth
+```
 
-![image](https://user-images.githubusercontent.com/1712635/30354210-0638f3b2-97e0-11e7-82c5-df18197ccdbd.png)
+Create a Web Server VM : [https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-cli#create-virtual-machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-cli#create-virtual-machine)
 
-### Winforms + WCF Application
+## Step 3 - Connecting to a SQL database
 
-The winforms application is a catalog management, and uses a WCF as a back-end. Read more about the Winforms + WCF sample [here](./winforms-wcf.md)
+The application is working from an in-memory database, and the next step is to configure it to use an Azure SQL Database.
 
-### DEPLOYMENT TO AZURE CONTAINER INSTANCES
-![image](https://user-images.githubusercontent.com/1712635/38395601-9258dd0e-38e8-11e8-8b42-cafff5f93c57.png)
+First we need to create the actual SQL database infrastructure in Azure.
 
-### DEPLOYMENT TO AZURE WINDOWS SERVER 2016 VM
-![image](https://user-images.githubusercontent.com/1712635/30402804-d62632a2-9893-11e7-817a-f9f616cdf380.png)
+```bash
+az deployment group create -g eshopmodernise -f sqlServer.bicep
+```
 
-### DEPLOYMENT TO KUBERNETES CLUSTER IN AKS (Azure Kubernetes Service)
-![image](https://user-images.githubusercontent.com/1899987/61177768-7526a100-a5aa-11e9-8279-bdfba19e1335.png)
+Next, we need to configure the web app not to use Mock data, and instead to use a SQL Server Database. For this, open the web.config file and change UseMockData to false.
 
-### DEPLOYMENT TO AZURE WEB APP FOR CONTAINERS
-![image](https://docs.microsoft.com/en-us/dotnet/architecture/modernize-with-azure-containers/media/image5-11.png)
+```xml
+  <appSettings>
+    <add key="UseMockData" value="false" />
+    <add key="UseCustomizationData" value="false" />
+  </appSettings>
+```
 
-## Quick start: Running all apps together in your local Windows 10 PC with "Docker for Windows"
+Using the Azure Portal, you can view the connection strings for the newly created SQL Database. Replace the connection string in the web.config file, noting the database name has to be `Microsoft.eShopOnContainers.Services.CatalogDb`.
 
-You have more detailed procedures at the [Wiki](https://github.com/dotnet-architecture/eShopModernizing/wiki), but for the quickest way to get started and run all samples together using Docker for Windows, open a **"Developer Command Prompt for VS 2017 (or 2019)"** (to ensure you have right `msbuild` on `PATH`), go to the eShopModernizing root folder and run the `build.cmd` script.
+old
 
-**Note: The current version uses netcoreapp3.0. You will need to instll the preview SDK and set Visual Studio to 'Use previews of the .NET Core SDK (under Options - Projects and Solutions - .NET Core).**
+```xml
+  <connectionStrings>
+    <add name="CatalogDBContext" connectionString="Data Source=(localdb)\MSSQLLocalDB; Initial Catalog=Microsoft.eShopOnContainers.Services.CatalogDb; Integrated Security=True; MultipleActiveResultSets=True;" providerName="System.Data.SqlClient" />
+  </connectionStrings>
+```
 
-This script will:
+new
 
-* Build MVC project
-* Build Webforms project
-* Build WCF back-end project
-* Create three Docker images (Windows Container images):
-   * `eshop/modernizedwebforms`
-   * `eshop/modernizedmvc`
-   * `eshop/wcfservice`
+```xml
+  <connectionStrings>
+    <add name="CatalogDBContext" connectionString="VALUE FROM AZURE PORTAL, WITH YOUR DEFINED PASSWORD INSERTED" />
+  </connectionStrings>
+```
 
-You can check the just created Docker images by running `docker images` from the command line:
+## Step 4 - Deploying to App Service
 
-![image](https://user-images.githubusercontent.com/1712635/38949583-a2c11ba2-42f7-11e8-9c10-b74f2a005186.png)
+Visual Studio has Publishing Profiles for deploying your app to a new App Service plan in Azure. Follow the Publishing Wizard to create an App Service Hosting Plan and the Application itself.
 
-Finally just run `docker-compose up` (in the root of the repo) to start all three projects and one SQL Server container. Once the containers are started:
+![app service publish profile](publishToAppService.png)
 
-* MVC web app listens in: 
-     - Port 5115 on the Docker Host (PC) network card IP
-     - Port 80 on the internal container's IP
-* Webforms web app listens in:  
-     - Port 5114 on the Docker Host (PC) network card IP
-     - Port 80 on the internal container's IP
-* WCF service listens in port: 
-     - Port 5113 on the Docker Host (PC) network card IP
-     - Port 80 on the internal container's IP
+Publish the application to Azure.
 
->**Note** You should be able to use `http://localhost:<port>` to access the desired application. 
+![app service publish](publishToAppService2.png)
 
-In order to test the apps/containers from within the Docker host itself (the dev Windows PC) you need to use the internal IP (container's IP) to access the application. To find the internal IP, just type  `docker ps` to find the container ids:
+## Step 5 - Windows Containers
 
-![docker ps output](./assets/docker-ps.png)
+Azure App Service provides a simple destination for most web applications. However it does limit the processes that are allowed to run, this can mean for complex applications that have permissive library dependencies - these will normally be blocked, eg.
 
-Then use the command `docker inspect  <CONTAINER-ID> -f {{.NetworkSettings.Networks.nat.IPAddress}}` to find the container's IP, and use that IP **and port 80** to access the container:
+1. Custom fonts
+1. Cultures
+1. GAC deployed assemblies
+1. GDI libraries
 
-![accessing-container](./assets/internal-ip-access.png)
+In order to facilitate these more complex applications running in Azure, we need to ship the code in a container or run the code on VM infrastructure.
 
-### The localhost loopback limitation in Windows Containers Docker hosts
+Visual Studio makes it easy to Containerise the application. You can add a complete Dockerfile by selecting; Project, Add, Docker Support.
+Here's what gets generated;
 
-Due to a default NAT limitation in current versions of Windows (see [https://blog.sixeyed.com/published-ports-on-windows-containers-dont-do-loopback/](https://blog.sixeyed.com/published-ports-on-windows-containers-dont-do-loopback/)) you can't access your containers using `localhost` from the host computer.
-You have further information here, too: https://blogs.technet.microsoft.com/virtualization/2016/05/25/windows-nat-winnat-capabilities-and-limitations/
+```dockerfile
+FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2019
+ARG source
+WORKDIR /inetpub/wwwroot
+COPY ${source:-obj/Docker/publish} .
+```
 
-Although that [limitation has been removed beginning with Build 17025](https://blogs.technet.microsoft.com/networking/2017/11/06/available-to-windows-10-insiders-today-access-to-published-container-ports-via-localhost127-0-0-1/) (as of early 2018, still only available today to Windows Insiders, not public/stable release). With that version (Windows 10 Build 17025 or later), access to published container ports via “localhost”/127.0.0.1 should be available.
+Now we can run the application locally in a container from Visual Studio.
+
+### Container Registry (ACR)
+
+Azure has a container registry for container image storage, even if you already have a preferred on-premises registry it can be beneficial to use Azure Container Registry in addition because of the integration it has with other Azure services.
+
+Lets create the registry now.
+
+```bash
+az deployment group create -g eshopmodernise -f .\acr.bicep
+```
+
+### Publishing to ACR from Visual Studio
+
+Now from Visual Studio we can push the image.
+
+![acr publish profile](publishToAcr.png)
+
+![acr publish](publishToAcr2.png)
+
+This can take some time to upload, and if we run the `docker images` command - then we can see why.
+
+![docker images](dockerImages.png)
+
+### Creating another Dockerfile
+
+The Dockerfile that was generated by Visual Studio is intended to work an already built application. It works well locally and in CI/CD tools after a build step but to give us a few more options, we really want to get the Dockerfile to build the Web App by itself. This is what my Dockerfile looks like;
+
+```dockerfile
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019 AS build
+
+COPY . ./src/
+WORKDIR /src
+
+RUN nuget restore eShopLegacyWebForms.sln
+RUN msbuild eShopLegacyWebForms.sln /p:Configuration=Release /p:BuildingProject=true /p:OutDir=..\PUBLISH
+#RUN echo $(ls src/PUBLISH/_PublishedWebsites/eShopLegacyWebForms)
+
+FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2019 AS runtime
+WORKDIR /inetpub/wwwroot
+COPY --from=build src/src/PUBLISH/_PublishedWebsites/eShopLegacyWebForms/ ./
+#RUN echo $(ls)
+```
+
+Now when the Dockerfile is called via a straight `docker build .` command, it can produce a working app locally on the dev workstation.
+
+### Building the image with to ACR directly
+
+Building and pushing images locally can take time, all dependant on your internet connection. A more efficient way to do it is to have the Azure Container Registry build the image itself.
+
+> For ACR to be able to build the Dockerfile it needs to be able to access your source code, [Private Pools](https://docs.microsoft.com/azure/container-registry/tasks-agent-pools) are a preview feature which project the ACR build agents into your private virtual network.
+
+Now we have a free-standing Dockerfile, we can leverage the Azure CLI to initiate the ACR build;
+
+```bash
+az acr build -g eshopmodernise -r YOURACRNAME -t 2019fullfat:20220805 https://github.com/Gordonby/eShopModernizing.git#main:eShopLegacyWebFormsSolution --platform windows
+```
+
+![acr build screenshot one](acrbuild.png)
+![acr build screenshot two](acrbuild2.png)
+
+### Building the image in CI/CD Tooling
+
+#### GitHub
+
+TODO
+
+#### Azure DevOps
+
+### Enhancing the Dockerfile
+
+It's common for legacy applications to have 3rd party dependencies. To install these, we'll use PowerShell to silently install and configure them. We'll walk through different pieces of software and show how to install/configure them.
+
+#### The Azure CLI
+
+```dockerfile
+SHELL ["powershell"]
+RUN powershell $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile .\AzureCLI.msi; Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'; rm .\AzureCLI.msi
+```
 
 
-## Review the Wiki for detailed instructions on how to set it up and deploy to multiple environments
+## Step 6 - Compute Options
 
-Wiki: https://github.com/dotnet-architecture/eShopModernizing/wiki
+Now that we have our Container Image in ACR, there are several compute options for hosting it. 
 
-### Choose in-memory mock-data or real database connection to a SQL Server database
+Azure Service | Summary | Docs | Learn Courses
+------------- | ------- | ---- | -------------
+[Web App for Containers](https://azure.microsoft.com/services/app-service/containers/) | Fully-managed platform to easily deploy and run containerised applications | [docs](https://docs.microsoft.com/azure/app-service/configure-custom-container?pivots=container-windows) | [Deploy and run a containerized web app with Azure App Service](https://docs.microsoft.com/learn/modules/deploy-run-container-app-service)
+[Azure Container Instance](https://azure.microsoft.com/services/container-instances/#features) | Best suited to simple, temporary workloads | [docs](https://docs.microsoft.com/azure/container-instances/container-instances-overview) | [Run container images in Azure Container Instances](https://docs.microsoft.com/learn/modules/create-run-container-images-azure-container-instances/)
+[Azure Kubernetes Service](https://azure.microsoft.com/services/kubernetes-service/) | A managed Kubernetes infrastructure environment | [docs](https://docs.microsoft.com/azure/aks/learn/quick-windows-container-deploy-cli) | [Orchestrate containers on Windows Server using Kubernetes](https://docs.microsoft.com/learn/modules/orchestrate-containers-windows-server-using-kubernetes/)
 
-The MVC and WebForms web apps allow either to connect to the real database to get/update the product catalog or to use mock-data if, due to any reason, the database is still not available and you need to test/demo the app. 
+## Step 7 - Deploying to Azure App Service (Containers)
 
-For each application, the option to select one or the other mode can be configured in the docker-compose.override.yml file when using Windows Containers or at the `Web.config` file when you still are NOT using Containers (original versions).
+For this step, we'll use the [portal](https://ms.portal.azure.com/#create/Microsoft.AppSvcLinux) to quickly create a Windows OS, Docker Container based Web App. The portal makes light work of pulling our image from the Azure Container Registry.
 
+![web app for containers create](webAppContainers.png)
 
+Once the image has been pulled, the application is available, running from the same Azure Database.
+
+![web app for containers running](webAppContainers2.png)
+
+https://docs.microsoft.com/en-gb/azure/app-service/configure-custom-container?pivots=container-linux#use-an-image-from-a-private-registry
+
+### Using Azure AD for SQL Authentication
+
+Managed Identities provide a great way for Azure services to access other Azure services with a clear RBAC system.
+
+An Azure Web Application can be given an identity which is then leveraged when accessing the SQL Database. You will need to change your code to get an access token to use with the SQL database connection.  [Read more](https://docs.microsoft.com/en-us/azure/app-service/tutorial-connect-msi-sql-database?tabs=windowsclient%2Cef%2Cdotnet)
+
+### Application Settings
+
+### Key Vault integration
+
+### Observability
+
+1. Logs
+1. Application Insights
+
+#### Application Insights
+
+Enable [Auto-Instrumentation](https://azure.github.io/AppService/2022/04/11/windows-containers-app-insights-preview.html) of your Web App Container to automatically attach an agent to the container. It will collect metrics such as requests, dependencies, latency, and stack traces.
+
+### Scalability
+
+[ARR affinity](https://azure.github.io/AppService/2016/05/16/Disable-Session-affinity-cookie-(ARR-cookie)-for-Azure-web-apps.html) is supported 
+
+## Step 8 - Deploying to Azure Kubernetes Service
+
+## Step 9 - Windows Server 2022 based images
+
+Windows Server 2022 has a number of benefits over Windows Server 2019, https://docs.microsoft.com/virtualization/windowscontainers/about/whats-new-ws2022-containers
+
+## Links
+
+[Azure app Service Team Blog - Windows Containers](https://azure.github.io/AppService/windows-containers/)
+[Docs - Windows Containers](https://docs.microsoft.com/en-gb/virtualization/windowscontainers/about/)

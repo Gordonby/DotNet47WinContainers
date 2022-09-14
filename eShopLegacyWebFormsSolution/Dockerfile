@@ -5,17 +5,13 @@ WORKDIR /src
 
 RUN nuget restore eShopLegacyWebForms.sln
 
-#RUN msbuild eShopLegacyWebForms.csproj -t:restore /p:Configuration=Release /p:BuildingProject=true /p:OutDir=..\PUBLISH
 RUN msbuild eShopLegacyWebForms.sln /p:Configuration=Release /p:BuildingProject=true /p:OutDir=..\PUBLISH
-
-#RUN echo $(ls)
-#RUN echo $(ls src)
-#RUN echo $(ls src/PUBLISH)
 #RUN echo $(ls src/PUBLISH/_PublishedWebsites/eShopLegacyWebForms)
-#RUN echo $(ls src/PUBLISH/_PublishedWebsites/eShopLegacyWebForms/bin)
 
 FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2019 AS runtime
 WORKDIR /inetpub/wwwroot
 COPY --from=build src/src/PUBLISH/_PublishedWebsites/eShopLegacyWebForms/ ./
 
-#RUN echo $(ls)
+#Install the Azure CLI
+SHELL ["powershell"]
+RUN powershell $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile .\AzureCLI.msi; Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'; rm .\AzureCLI.msi
