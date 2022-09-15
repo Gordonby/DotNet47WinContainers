@@ -3,7 +3,15 @@
 This guide provides a step by step, developer centric view of migrating **legacy ASP.NET applications** to Azure.
 For a tool based approach using  Azure Migrate: App Containerization tool, please see [https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-kubernetes](https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-kubernetes) or [https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-app-service](https://docs.microsoft.com/azure/migrate/tutorial-app-containerization-aspnet-app-service), noting that current tool doesn't support Apps that use Windows Authentication or have non IIS dependencies.
 
-## Step 1 - Getting the app running
+### The App
+
+The application chosen for this guide is from the [eShopModernizing](https://github.com/dotnet-architecture/eShopModernizing) repo. It's a DotNet Framework 4.7 Web Forms Application.
+
+### The objective
+
+To iteratively work with the application, modernising it step by step to eventually run in a Windows 2022 container. Once containerised there will be guidance on running it in a number of Azure Container Compute services.
+
+## Step 1 - Getting the app running locally
 
 Before modernising starts, it's best to see the app running and working properly.
 
