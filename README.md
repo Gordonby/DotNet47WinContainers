@@ -24,7 +24,7 @@ Update-Package Microsoft.CodeDom.Providers.DotNetCompilerPlatform -r
 
 As simple as pressing start, we now have the application working with an in-memory database.
 
-![working legacy app](legacyAppScreenshot.png)
+![working legacy app](docassets/legacyAppScreenshot.png)
 
 ## Step 2 - Publishing to an Azure VM
 
@@ -81,11 +81,11 @@ new
 
 Visual Studio has Publishing Profiles for deploying your app to a new App Service plan in Azure. Follow the Publishing Wizard to create an App Service Hosting Plan and the Application itself.
 
-![app service publish profile](publishToAppService.png)
+![app service publish profile](docassets/publishToAppService.png)
 
 Publish the application to Azure.
 
-![app service publish](publishToAppService2.png)
+![app service publish](docassets/publishToAppService2.png)
 
 ## Step 5 - Windows Containers
 
@@ -124,13 +124,13 @@ az deployment group create -g eshopmodernise -f .\acr.bicep
 
 Now from Visual Studio we can push the image.
 
-![acr publish profile](publishToAcr.png)
+![acr publish profile](docassets/publishToAcr.png)
 
-![acr publish](publishToAcr2.png)
+![acr publish](docassets/publishToAcr2.png)
 
 This can take some time to upload, and if we run the `docker images` command - then we can see why.
 
-![docker images](dockerImages.png)
+![docker images](docassets/dockerImages.png)
 
 ### Creating another Dockerfile
 
@@ -166,8 +166,8 @@ Now we have a free-standing Dockerfile, we can leverage the Azure CLI to initiat
 az acr build -g eshopmodernise -r YOURACRNAME -t 2019fullfat:20220805 https://github.com/Gordonby/eShopModernizing.git#main:eShopLegacyWebFormsSolution --platform windows
 ```
 
-![acr build screenshot one](acrbuild.png)
-![acr build screenshot two](acrbuild2.png)
+![acr build screenshot one](docassets/acrbuild.png)
+![acr build screenshot two](docassets/acrbuild2.png)
 
 ### Building the image in CI/CD Tooling
 
@@ -181,7 +181,9 @@ TODO
 
 It's common for legacy applications to have 3rd party dependencies. To install these, we'll use PowerShell to silently install and configure them. We'll walk through different pieces of software and show how to install/configure them.
 
-#### The Azure CLI
+#### Installing the Azure CLI
+
+It can be super useful installing the Azure CLI into your container, allowing your app to run az commands to communicate with the Azure Control Plane.
 
 ```dockerfile
 SHELL ["powershell"]
@@ -203,11 +205,11 @@ Azure Service | Summary | Docs | Learn Courses
 
 For this step, we'll use the [portal](https://ms.portal.azure.com/#create/Microsoft.AppSvcLinux) to quickly create a Windows OS, Docker Container based Web App. The portal makes light work of pulling our image from the Azure Container Registry.
 
-![web app for containers create](webAppContainers.png)
+![web app for containers create](docassets/webAppContainers.png)
 
 Once the image has been pulled, the application is available, running from the same Azure Database.
 
-![web app for containers running](webAppContainers2.png)
+![web app for containers running](docassets/webAppContainers2.png)
 
 https://docs.microsoft.com/en-gb/azure/app-service/configure-custom-container?pivots=container-linux#use-an-image-from-a-private-registry
 
@@ -215,7 +217,7 @@ https://docs.microsoft.com/en-gb/azure/app-service/configure-custom-container?pi
 
 Managed Identities provide a great way for Azure services to access other Azure services with a clear RBAC system.
 
-An Azure Web Application can be given an identity which is then leveraged when accessing the SQL Database. You will need to change your code to get an access token to use with the SQL database connection.  [Read more](https://docs.microsoft.com/en-us/azure/app-service/tutorial-connect-msi-sql-database?tabs=windowsclient%2Cef%2Cdotnet)
+An Azure Web Application can be given an identity which is then leveraged when accessing the SQL Database. You will need to change your code to get an access token to use with the SQL database connection.  [Read more](https://docs.microsoft.com/azure/app-service/tutorial-connect-msi-sql-database?tabs=windowsclient%2Cef%2Cdotnet)
 
 ### Application Settings
 
